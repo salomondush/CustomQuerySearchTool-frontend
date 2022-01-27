@@ -3,13 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@matharumanpreet00/react-daterange-picker": "^1.0.5",
     "@testing-library/jest-dom": "^5.16.1",
     "@testing-library/react": "^12.1.2",
     "@testing-library/user-event": "^13.5.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-scripts": "5.0.0",
-    "semantic-ui-css": "^2.4.1",
+    "react-time-picker": "^4.4.4",
+    "semantic-ui-calendar-react": "^0.15.3",
+    "semantic-ui-css": "github:Semantic-Org/Semantic-UI-CSS",
     "semantic-ui-react": "^2.0.4",
     "web-vitals": "^2.1.3"
   },
