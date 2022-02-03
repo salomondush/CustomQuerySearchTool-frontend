@@ -2,14 +2,17 @@
 import 'semantic-ui-css/semantic.min.css'
 import { Grid, Container, Segment, Form, Dropdown, Button } from 'semantic-ui-react'
 // import { DateRangePicker, DateRange } from "@matharumanpreet00/react-daterange-picker";
-import TimePicker from 'react-time-picker';
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import {
-    DateInput,
     TimeInput,
-    DateTimeInput,
     DatesRangeInput
   } from 'semantic-ui-calendar-react';
+
+
+function convertDDMMYYYYtoYYYYMMDD(date){
+    var dateArray = date.split("-");
+    return dateArray[2] + "-" + dateArray[1] + "-" + dateArray[0];
+} 
 
 
 export default function SearchQuery(props){
@@ -17,13 +20,15 @@ export default function SearchQuery(props){
     const [ restuarantIds, setRestuarantIds ] = React.useState([]);
     const [ dateRange, setDateRange ] = React.useState("");
     const [ timeRange, setTimeRange ] = React.useState({
-        start: "",
-        end: ""
+        start: 0,
+        end: 0
     });
-    const [ open, setOpen ] = React.useState(true);
     const [ metric, setMetric ] = React.useState("");
     const [ measure, setMeasure ] = React.useState("");
-    const [ numericValue, setNumericValue ] = React.useState("");
+    const [ numericValue, setNumericValue ] = React.useState(0);
+    const [ metricDefinitions, setMetricDefinitions ] = React.useState([]);
+
+    const [ metricCriteria, setMetricCriteria ] = React.useState(["salomon"]);
 
     const restaurantIdOptions = [
         { key: '1', text: '1', value: '1' },
@@ -36,27 +41,60 @@ export default function SearchQuery(props){
         { key: '8', text: '8', value: '8' },
 
     ]
+   
 
-    console.log("date range", dateRange);
+    async function getMetricDefinitions(url = ""){
 
-    function handleSubmit(){
+        const response = await fetch(url, {
+            method: "GET",
+            cache: "no-cache",  
+        })
+
+        return await response.json();
+    }
+
+    useEffect(() => {
+        getMetricDefinitions("https://customsearchquerytoolapi.azurewebsites.net/Search/MetricDefinitions")
+        .then(data => {
+            setMetricDefinitions(data);
+            console.log(metricDefinitions);
+        }).catch(err => {
+            console.log("Error: ", err);
+        });
+    }, []);
+
+
+    async function handleSubmit(){
+        var dateRanges = dateRange.split(" - ");
+
         const query = {
             "restuarantIds": restuarantIds,
-            "fromDate": "",
-            "toDate": "",
-            "fromHour": "",
-            "toHour": "",
+            "fromDate": dateRanges[0] && (new Date(convertDDMMYYYYtoYYYYMMDD(dateRanges[0]))).toISOString(),
+            "toDate": dateRanges[0] && (new Date(convertDDMMYYYYtoYYYYMMDD(dateRanges[0]))).toISOString(),
+            "fromHour": timeRange.start,
+            "toHour": timeRange.end,
             "metricCriteria": [
                 {
-                    "metricCode": "string",
-                    "compareType": "Equal",
-                    "value": 0
+                    "metricCode": metric,
+                    "compareType": measure,
+                    "value": numericValue
                 }
             ]
         }
 
-        // todo: send query to server
+        const response = await fetch("https://customsearchquerytoolapi.azurewebsites.net/Search/Query", {
+            method: "POST",
+            body: JSON.stringify(query),
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            cache: "no-cache",  
+        })
+
+        const data = await response.json();
+        console.log(data);
     }
+    
 
     return (
         <div className="SearchQuery">
@@ -120,7 +158,7 @@ export default function SearchQuery(props){
                                                         placeholder="Start"
                                                         value={timeRange.start}
                                                         iconPosition="left"
-                                                        onChange={(e, { value }) => setTimeRange({start: value, end: timeRange.end})}
+                                                        onChange={(e, { value }) => setTimeRange({start: parseInt(value.split(":")[0]), end: timeRange.end})}
                                                     />
                                                 </div>
                                                 <div class="column">
@@ -129,22 +167,26 @@ export default function SearchQuery(props){
                                                         placeholder="End"
                                                         value={timeRange.end}
                                                         iconPosition="left"
-                                                        onChange={(e, { value }) => setTimeRange({start: timeRange.start, end: value})}
+                                                        onChange={(e, { value }) => setTimeRange({start: timeRange.start, end: parseInt(value.split(":")[0])})}
                                                     />
                                                 </div>
                                             </div>
                                         </div>
                                     </Form.Field>
+                                    
                                     <Form.Field>
                                         <label>Metric Selector</label>
                                         <div class="ui grid">
                                             <div class="three column row">
                                                 <div class="column">
                                                     <Dropdown
-                                                        options={[
-                                                            { key: 'Metric1', text: 'Metric1', value: 'Metric1' },
-                                                            { key: 'Metric2', text: 'Metric2', value: 'Metric2' },
-                                                        ]}
+                                                        options={metricDefinitions.map((m, index) => {
+                                                            return {
+                                                                key: index,
+                                                                text: m.alias,
+                                                                value: m.metricCode
+                                                            }
+                                                        })}
                                                         selection
                                                         placeholder='Select Metric'
                                                         value={metric}
@@ -154,11 +196,11 @@ export default function SearchQuery(props){
                                                 <div class="column">
                                                     <Dropdown
                                                         options={[
-                                                            { key: '=', text: '=', value: '=' },
-                                                            { key: '>', text: '>', value: '>' },
-                                                            { key: '<', text: '<', value: '<' },
-                                                            { key: '>=', text: '>=', value: '>=' },
-                                                            { key: '<=', text: '<=', value: '<=' },
+                                                            { key: 'Equal', text: 'Equal', value: 'Equal' },
+                                                            { key: 'GreaterThan', text: 'GreaterThan', value: 'GreaterThan' },
+                                                            { key: 'LessThan', text: 'LessThan', value: 'LessThan' },
+                                                            { key: 'GreaterThanOrEqual', text: 'GreaterThanOrEqual', value: 'GreaterThanOrEqual' },
+                                                            { key: 'LessThanOrEqual', text: 'LessThanOrEqual', value: 'LessThanOrEqual' },
                                                         ]}
                                                         selection
                                                         placeholder='Select a measure'
@@ -172,17 +214,30 @@ export default function SearchQuery(props){
                                                             type="text" 
                                                             placeholder="Numeric Value" 
                                                             value={numericValue} 
-                                                            onChange={(e) => setNumericValue(e.target.value)}
+                                                            onChange={(e) => setNumericValue(parseInt(e.target.value) || 0)}
                                                         />
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </Form.Field>
+                                    <Form.Field>
+                                        <div>
+                                            
+                                        {metricCriteria.map( c=> {
+                                            return <p> {c} </p>
+                                        })}
+                                        </div>
+                                    </Form.Field>
+                                    <Form.Field>
+                                        <Button type="button" onClick={(event, data) =>  {
+                                            setMetricCriteria([...metricCriteria, "new thing"])
+                                        }}>Add Criterai</Button>
+                                    </Form.Field>
                                     <div class="ui centered grid">
                                         <Button type="submit" positive>Submit</Button>
                                     </div>
-                                    
+
                                 </Form>
                             </Segment>
                         </Container>
