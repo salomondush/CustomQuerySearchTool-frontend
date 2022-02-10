@@ -6,9 +6,10 @@ import SearchResults from './components/SearchResults';
 
 function App() {
   return (
-    
-    <SearchQuery />
-     
+    <div>
+      <SearchQuery />
+      {/* <SearchResults /> */}
+    </div>
   );
 }
 
