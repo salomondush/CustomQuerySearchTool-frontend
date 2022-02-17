@@ -45,6 +45,8 @@ export default function SearchQuery(props){
     ]);
     const [ results, setResults ] = React.useState([]);
 
+    console.log("metricCriteria: ", metricCriteria);
+
     const restaurantIdOptions = [
         { key: '1', text: '1', value: 1 },
         { key: '2', text: '2', value: 2 },
@@ -229,7 +231,7 @@ export default function SearchQuery(props){
                                                                                 if(o !== c){
                                                                                     newMetricCriteria.push(o);
                                                                                 } else {
-                                                                                    console.log("to  skip", o);
+                                                                                    console.log("to skip", o);
                                                                                 }
                                                                                 
                                                                             });
@@ -253,6 +255,7 @@ export default function SearchQuery(props){
                                                                     selection
                                                                     // placeholder='Select Metric'
                                                                     // value={metricCriteria[i]["metricCode"]}
+                                                                    value={c.metricCode}
                                                                     defaultValue={c["metricCode"]}
                                                                     onChange={(e, { value }) => {
                                                                         updateMetricCriteria(i, value, "metricCode");
@@ -270,6 +273,7 @@ export default function SearchQuery(props){
                                                                     ]}
                                                                     selection
                                                                     placeholder='Select a measure'
+                                                                    value={c.compareType}
                                                                     defaultValue={c["compareType"]}
                                                                     onChange={(e, { value }) => {
                                                                         updateMetricCriteria(i, value, "compareType");
@@ -282,6 +286,7 @@ export default function SearchQuery(props){
                                                                         type="number" 
                                                                         placeholder="Numeric Value" 
                                                                         defaultValue={`${c["value"]}`}
+                                                                        value={`${c.value}`}
                                                                         onChange={(e) => {
                                                                             updateMetricCriteria(i, parseInt(e.nativeEvent.target.value), "value");
                                                                         }}

@@ -11,8 +11,6 @@ export default function SearchResults(props){
     const [ filterValue, setFilterValue ] = React.useState('');
     const [ filterOperator, setFilterOperator ] = React.useState('');
 
-    console.log(filterMetric, filterOperator, filterValue);
-
     function handleFilter(){
         // filter results
         if(filterMetric && filterValue && filterOperator){
