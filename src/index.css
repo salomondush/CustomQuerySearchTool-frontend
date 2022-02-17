@@ -11,3 +11,28 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.searchResult{
+  margin-top: 50px;
+  /*align center*/
+  margin: 0 auto;
+}
+
+.SearchQuery{
+  width: 70%;
+  margin: 40px;
+  /* border: 1px solid #ccc; */
+  /*center this div*/
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.instructions{
+  /*make text italics*/
+  font-style: italic;
+  font-size: 1.3em;
+}

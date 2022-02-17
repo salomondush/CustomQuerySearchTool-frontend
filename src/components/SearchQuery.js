@@ -21,6 +21,7 @@ function convertDDMMYYYYtoYYYYMMDD(date){
 
 export default function SearchQuery(props){
 
+    const [ filters, setFilters ] = React.useState(false);
     const [ restuarantIds, setRestuarantIds ] = React.useState([]);
     const [ dateRange, setDateRange ] = React.useState("");
     const [ timeRange, setTimeRange ] = React.useState({
@@ -29,12 +30,19 @@ export default function SearchQuery(props){
     });
     const [ metricDefinitions, setMetricDefinitions ] = React.useState([]);
 
-    const metricCriteriaDefualt = {
+    var defaultMetricCriteria = {
         "metricCode": "string",
         "compareType": "string",
         "value": 0
     }
-    const [ metricCriteria, setMetricCriteria ] = React.useState([metricCriteriaDefualt]);
+
+    const [ metricCriteria, setMetricCriteria ] = React.useState([
+        {
+            "metricCode": "string",
+            "compareType": "string",
+            "value": 0
+        }
+    ]);
     const [ results, setResults ] = React.useState([]);
 
     const restaurantIdOptions = [
@@ -70,52 +78,45 @@ export default function SearchQuery(props){
     }, []);
 
 
+    async function postData(url="", data){
+        const response = await fetch(url, {
+            method: "POST",
+            cache: "no-cache",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json, text/plain, */*"
+            },
+            body: JSON.stringify(data)
+        })
+
+        return await response.json();
+    }
+
+
     async function handleSubmit(){
         var dateRanges = dateRange.split(" - ");
-
-        // const query = {
-        //     "restuarantIds": [...restuarantIds],
-        //     "fromDate": dateRanges[0] && (new Date(convertDDMMYYYYtoYYYYMMDD(dateRanges[0]))).toISOString(),
-        //     "toDate": dateRanges[1] && (new Date(convertDDMMYYYYtoYYYYMMDD(dateRanges[1]))).toISOString(),
-        //     "fromHour": timeRange.start,
-        //     "toHour": timeRange.end,
-        //     "metricCriteria": [...metricCriteria]
-        // }
 
         const query = 
             {
                 "restaurantIds": [
-                  1
+                  ...restuarantIds
                 ],
-                "fromDate": "2021-10-01T00:00:00.000Z",
-                "toDate": "2021-10-26T00:00:00.000Z",
-                "fromHour": 6,
-                "toHour": 17,
+                "fromDate": dateRanges[0] && (new Date(convertDDMMYYYYtoYYYYMMDD(dateRanges[0]))).toISOString(),
+                "toDate": dateRanges[1] && (new Date(convertDDMMYYYYtoYYYYMMDD(dateRanges[1]))).toISOString(),
+                "fromHour": timeRange.start,
+                "toHour": timeRange.end,
                 "metricCriteria": [
-                  {
-                    "metricCode": "NetAmount",
-                    "compareType": "GreaterThan",
-                    "value": 35
-                  }
+                 ...metricCriteria
                 ]
               }
         
 
-        // console.log("Query: ", query1);
-
-        const response = await fetch("https://customsearchquerytoolapi.azurewebsites.net/Search/Query", {
-            method: "POST",
-            cache: "no-cache",
-            mode: "cors",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(query)
-        })
-
-        const data = await response.json();
-        console.log(data);
-        setResults(data);
+        postData("https://customsearchquerytoolapi.azurewebsites.net/Search/Query", query).then(data => {
+            setFilters(false);
+            setResults(data);
+        }).catch(err => {
+            console.log("Error: ", err);
+        });
     }
 
     
@@ -135,6 +136,13 @@ export default function SearchQuery(props){
 
     return (
         <div className="SearchQuery">
+            <div className="title">
+                <h1>Custom Query Search Tool</h1>
+            </div>
+            <div className="instructions">
+                <p>To run the Custom Search Query Tool to query data from the API, select parameters in the Form below and click the Submit button. Note that the API contains data for dates between 10/1/2021 and
+                    10/26/2021.</p>
+            </div>   
             <Grid className="Grid">
                 <Grid.Row>
                     <Grid.Column>
@@ -210,8 +218,22 @@ export default function SearchQuery(props){
                                                                 <div>
                                                                     <BiXCircle  
                                                                         onClick={() => {
-                                                                            var newMetricCriteria = [...metricCriteria];
-                                                                            newMetricCriteria.splice(i, 1);
+                                                                            // var newMetricCriteria = [...metricCriteria];
+                                                                            // newMetricCriteria.splice(i, 1);
+                                                                            // setMetricCriteria(newMetricCriteria);
+
+                                                                            console.log(metricCriteria[i] === c);
+
+                                                                            var newMetricCriteria = []
+                                                                            metricCriteria.forEach(o => {
+                                                                                if(o !== c){
+                                                                                    newMetricCriteria.push(o);
+                                                                                } else {
+                                                                                    console.log("to  skip", o);
+                                                                                }
+                                                                                
+                                                                            });
+
                                                                             setMetricCriteria(newMetricCriteria);
                                                                         }}
                                                                         size="1.8em"
@@ -259,7 +281,7 @@ export default function SearchQuery(props){
                                                                     <input 
                                                                         type="number" 
                                                                         placeholder="Numeric Value" 
-                                                                        defaultValue={c["value"]}
+                                                                        defaultValue={`${c["value"]}`}
                                                                         onChange={(e) => {
                                                                             updateMetricCriteria(i, parseInt(e.nativeEvent.target.value), "value");
                                                                         }}
@@ -275,7 +297,7 @@ export default function SearchQuery(props){
                                     </Form.Field>
                                     <Form.Field>
                                         <Button type="button" onClick={(event, data) =>  {
-                                            setMetricCriteria([...metricCriteria, metricCriteriaDefualt])
+                                            (metricCriteria.length < 5) && setMetricCriteria([...metricCriteria, defaultMetricCriteria]);
                                         }}>Add Criteria</Button>
                                     </Form.Field>
                                     <div className="ui centered grid">
@@ -292,7 +314,8 @@ export default function SearchQuery(props){
                     
                 {/* </Grid.Row> */}
             </Grid>
-            <SearchResults results={results}/>
+            <h1>Transaction Data</h1>
+            <SearchResults filters={filters} setFilters={setFilters} results={results}/>
         </div>
     )
 }
